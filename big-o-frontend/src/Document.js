@@ -74,15 +74,16 @@ export default class Document extends React.Component {
     }
 
     addValueToDiv(obj){
-        obj.value = obj.innerHTML.replace(/<div>/gi,'<br>').replace(/<\/div>/gi,'').replace(/<br>/gi, "\n").replace(/<br\/>/gi, "\n");
+        obj.value = obj.innerHTML.replace(/<br>/gi, "").replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
+        console.log(obj.value);
     }
 
     render() {
         let lineCounter = "";
         for (let i = 1; i <= this.state.lineCount; i++)
-            lineCounter += i + '\n'
+            lineCounter += i + '\n';
         if (lineCounter === "")
-            lineCounter = "1"
+            lineCounter = "1";
         return (
             <Container fluid style={{height: '100%', width: '100%', display: 'flex'}}>
                 <textarea style={{
@@ -102,7 +103,9 @@ export default class Document extends React.Component {
                     height: "100%",
                     width: "100%",
                     display: "inline",
-                    whiteSpace: "pre-wrap"
+                    whiteSpace: "pre-wrap",
+                    font: "400 13.3333px Arial",
+                    padding: 2,
                 }} autoCorrect="off" autoCapitalize="off"
                           spellCheck="false" onClick={this.onSelectionChanged} onKeyUp={this.onKeyUp}
                           onInput={this.onInputChanged} onScroll={this.onScrollChanged} onBlur={this.onBlur}/>
