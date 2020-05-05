@@ -1,10 +1,15 @@
 import React from 'react';
+import ReactDOMServer from 'react-dom/server'
 import {Container} from 'react-bootstrap'
+import TextFormatter from "./TextFormatter";
+import Button from "react-bootstrap/Button";
 
 export default class Document extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            content: this.props.content,
+            cursorPosition: 0,
             lineCount: 0,
             colCount: 0,
             startPosition: {col: 0, row: 0},
@@ -15,9 +20,14 @@ export default class Document extends React.Component {
         this.onSelectionChanged = this.onSelectionChanged.bind(this);
         this.onInputChanged = this.onInputChanged.bind(this);
         this.onScrollChanged = this.onScrollChanged.bind(this);
+        this.addColorToDiv = this.addColorToDiv.bind(this);
+        this.textFormatter = new TextFormatter();
     }
 
     onKeyUp(e) {
+        if (e.keyCode === 13) {
+            this.addValueToDiv(e.target, true)
+        }
         if (e.keyCode >= 33 && e.keyCode <= 40)
             this.onSelectionChanged(e);
     }
@@ -55,10 +65,10 @@ export default class Document extends React.Component {
         if (this.state.lineCount === 0)
             this.setState({lineCount: 1});
         let oldLineCount = parseInt(lineCounter.value.split('\n')[lineCounter.value.split('\n').length - 1]);
-        if (this.state.lineCount !== oldLineCount) {
+        if (this.state.lineCount !== oldLineCount)
             this.onScrollChanged(e);
-        }
         this.onSelectionChanged(e);
+        this.addColorToDiv(e);
     }
 
     onScrollChanged(e) {
@@ -67,15 +77,26 @@ export default class Document extends React.Component {
         lineCounter.scrollTop = obj.scrollTop;
     }
 
-    onBlur(e) {
-        console.log(e.target.value)
-       if (e.target.innerHTML.trim().length)
-           e.target.innerHTML = ""
+    addValueToDiv(obj, enterPressed = false){
+        if (enterPressed)
+            obj.innerText = obj.innerText.replace(/\n\n/, "\n")
+        obj.value = obj.innerText;
     }
 
-    addValueToDiv(obj){
-        obj.value = obj.innerHTML.replace(/<br>/gi, "").replace(/<div>/gi,'\n').replace(/<\/div>/gi,'')
-        console.log(obj.value);
+    addColorToDiv(e) {
+        let formattedHTML = "";
+        for (let line of e.target.value.split("\n"))
+            formattedHTML += ReactDOMServer.renderToStaticMarkup(
+                this.textFormatter.applyFormattingRules(line).map((fragment, index) =>
+                    <span key={index} className={`text-fragment text-fragment-${fragment.type}`}
+                          style={{maxWidth: `${fragment.width}ch`, minWidth: `${fragment.width}ch`}}>
+                    {fragment.text}
+                </span>)
+            ) + "\n";
+        formattedHTML = formattedHTML.substring(0, formattedHTML.length-1)
+        formattedHTML = formattedHTML.replace("\n", "<br>");
+        this.setState({content: formattedHTML, cursorPosition: e.target.selectionStart});
+        // this.setState({content: e.target.innerHTML, cursorPosition: e.target.selectionStart});
     }
 
     render() {
@@ -94,7 +115,7 @@ export default class Document extends React.Component {
                     textAlign: "left",
                     verticalAlign: "top",
                 }} cols={2} rows={this.state.lineCount > 55 ? this.state.lineCount : 55} value={lineCounter} readOnly id="lineCounter"/>
-                <div contentEditable={true} style={{
+                <div contentEditable={true} id={"editable"} style={{
                     overflowX: "hidden",
                     overflowY: "hidden",
                     backgroundColor: "#2b2b2c",
@@ -106,9 +127,29 @@ export default class Document extends React.Component {
                     whiteSpace: "pre-wrap",
                     font: "400 13.3333px Arial",
                     padding: 2,
-                }} autoCorrect="off" autoCapitalize="off"
-                          spellCheck="false" onClick={this.onSelectionChanged} onKeyUp={this.onKeyUp}
-                          onInput={this.onInputChanged} onScroll={this.onScrollChanged} onBlur={this.onBlur}/>
+                }} autoCorrect="off" autoCapitalize="off" spellCheck="false" onClick={this.onSelectionChanged}
+                     onKeyUp={this.onKeyUp} onInput={this.onInputChanged} onScroll={this.onScrollChanged} dangerouslySetInnerHTML={{__html: this.state.content}} onLoad={e => {
+                        let el = document.getElementById("editable");
+                        let range = document.createRange();
+                        let sel = window.getSelection();
+                        range.setStart(el.childNodes[el.childNodes.length - 1], 0);
+                        range.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                        el.focus();
+                }}/>
+                <p>Current Position: ({
+                    this.state.multiSelect ?
+                        this.state.startPosition.col + ", " + this.state.startPosition.row + ") (" + this.state.endPosition.col + ", " + this.state.endPosition.row :
+                        this.state.startPosition.col + ", " + this.state.startPosition.row
+                })</p>
+                <Button onClick={() => {
+                    console.log("document.getElementById(editable).innerText");
+                    console.log(document.getElementById("editable").innerText);
+                    // console.log(document.getElementById("editable").innerText.replace(/\n\n/gi, "<br>").replace(/\n/gi, "").replace(/<br>/gi, "\n"));
+                    console.log("document.getElementById(editable).innerHTML");
+                    console.log(document.getElementById("editable").innerHTML);
+                }} />
             </Container>
         )
     }

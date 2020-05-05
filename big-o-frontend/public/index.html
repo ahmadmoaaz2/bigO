@@ -10,6 +10,68 @@
       />
       <title>React App</title>
       <style>
+          .text-fragment {
+              overflow: hidden;
+          }
+
+          .text-fragment-comment {
+              color: rgb(153, 185, 105);
+          }
+
+          .text-fragment-string {
+              color: rgb(194, 94, 48);
+          }
+
+          .text-fragment-statement {
+              color: rgb(96, 151, 223);
+          }
+
+          .text-fragment-bracket {
+              color: rgb(118, 209, 106);
+          }
+
+          .text-fragment-operator {
+              color: rgb(118, 209, 106);
+          }
+
+          .text-fragment-type {
+              color: rgb(218, 46, 46);
+          }
+
+          .text-fragment-space {
+              position: relative;
+          }
+
+          .text-fragment-space::after {
+              content: " ";
+              display: block;
+              background-color: rgba(255, 255, 255, 0.05);
+              width: 4px;
+              height: 4px;
+              border-radius: 5px;
+              left: -2px;
+              top: -2px;
+              position: absolute;
+              margin: 0.5em 0.5ch;
+          }
+
+          .text-fragment-tab {
+              position: relative;
+          }
+
+          .text-fragment-tab::after {
+              content: " ";
+              display: block;
+              background-color: rgba(255, 255, 255, 0.05);
+              height: 4px;
+              border-radius: 5px;
+              left: 0;
+              right: 0;
+              top: -2px;
+              position: absolute;
+              margin: 0.5em 1.5px;
+          }
+
           textarea, div {
               border: none;
               overflow: auto;
