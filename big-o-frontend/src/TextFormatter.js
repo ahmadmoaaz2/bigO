@@ -38,7 +38,7 @@ const strictRules = [
         type: 'statement'
     },
     {
-        patterns: ['bool', 'void', 'int', 'char', 'double', 'float', 'var', 'const', 'let', 'auto'],
+        patterns: ['bool', 'void', 'int', 'char', 'double', 'float', 'var', 'const', 'let', 'auto', 'true', 'false'],
         type: 'type'
     }
 ];
