@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOMServer from 'react-dom/server'
-import {Container} from 'react-bootstrap'
+import Container from 'react-bootstrap/Container'
 import TextFormatter from "./TextFormatter";
 import Button from "react-bootstrap/Button";
 import ContentEditable from 'react-contenteditable'
@@ -22,50 +22,37 @@ export default class Document extends React.Component {
     }
 
     pasteAsPlainText(e){
+        // TODO: Fix paste limit
         e.preventDefault();
         let text = (e.originalEvent || e).clipboardData.getData('text/plain');
         document.execCommand("insertHTML", false, text);
     }
 
-    getCaretPosition() {
-        if (window.getSelection && window.getSelection().getRangeAt) {
-            const range = window.getSelection().getRangeAt(0);
-            const selectedObj = window.getSelection();
-            let rangeCount = 0;
-            const childNodes = selectedObj.anchorNode.parentNode.childNodes;
-            for (let i = 0; i < childNodes.length; i++) {
-                if (childNodes[i] === selectedObj.anchorNode) {
-                    break;
-                }
-                if (childNodes[i].outerHTML)
-                    rangeCount += childNodes[i].outerHTML.length;
-                else if (childNodes[i].nodeType === 3) {
-                    rangeCount += childNodes[i].textContent.length;
-                }
-            }
-            return range.startOffset + rangeCount;
-        }
-        return -1;
-    }
-
     onKeyUp(e) {
+        // TODO: Fix tab and enter
+        // TODO: Fix caret positioning reset on Enter and Tab
+        // \n not counted as character in caret positioning
+        // fix is getting line number of selection and adding it to .slice
         let obj = document.getElementById("editable");
+        console.log(EditCaretPositioning.saveSelection(obj).start)
         if(e.keyCode === 9) {
             obj.innerText = obj.innerText.slice(0, EditCaretPositioning.saveSelection(obj).start) + "\t" + obj.innerText.slice(EditCaretPositioning.saveSelection(obj).start)
             e.preventDefault()
         } else if (e.keyCode === 13) {
             let obj = document.getElementById("editable");
-            obj.innerText = obj.innerText.slice(0, EditCaretPositioning.saveSelection(obj).start) + "\t" + obj.innerText.slice(EditCaretPositioning.saveSelection(obj).start)
+            obj.innerText = obj.innerText.slice(0, EditCaretPositioning.saveSelection(obj).start) + "\n" + obj.innerText.slice(EditCaretPositioning.saveSelection(obj).start)
+            e.preventDefault()
         }
     }
 
     onInputChanged(e) {
+        // TODO: Add delay to coloration
         this.setState({cursorPosition: EditCaretPositioning.saveSelection(document.getElementById("editable"))});
         let obj = document.getElementById("editable");
         if (obj.innerHTML === "")
             this.setState({lineCount: 1, colCount: 0});
         else
-            this.setState({lineCount: obj.innerHTML.split("<br>").length, colCount: obj.innerHTML.split("<br>").sort((a, b) => {return a.length > b.length ? a : b;})[0].length});
+            this.setState({lineCount: obj.innerHTML.split("<br>").length - 1, colCount: obj.innerHTML.split("<br>").sort((a, b) => {return a.length > b.length ? a : b;})[0].length});
         if (this.state.lineCount === 0)
             this.setState({lineCount: 1});
         this.addColorToDiv(e);
@@ -112,7 +99,7 @@ export default class Document extends React.Component {
                     color: "white",
                     textAlign: "left",
                     verticalAlign: "top",
-                    font: "400 16px Arial",
+                    font: "400 16px Bookman Old Style",
                 }} cols={2} rows={this.state.lineCount > 55 ? this.state.lineCount : 55} value={lineCounter} readOnly id="lineCounter"/>
                 <ContentEditable autoCorrect={false} spellCheck={false} autoCapitalize={false} id={"editable"} style={{
                     overflowX: "hidden",
@@ -122,7 +109,7 @@ export default class Document extends React.Component {
                     height: "100%",
                     width: "100%",
                     display: "inline-block",
-                    font: "400 16px Arial",
+                    font: "400 16px Bookman Old Style",
                     padding: 2,
                 }} onKeyDown={this.onKeyUp} onChange={this.onInputChanged} html={content || ""} onPaste={this.pasteAsPlainText}/>
                 <Button onClick={() => {
@@ -130,6 +117,8 @@ export default class Document extends React.Component {
                     console.log(document.getElementById("editable").innerText);
                     console.log("document.getElementById(editable).innerHTML");
                     console.log(document.getElementById("editable").innerHTML);
+                }} /><Button onClick={() => {
+                    console.log(EditCaretPositioning.saveSelection(document.getElementById("editable")).start);
                 }} />
             </Container>
         )
