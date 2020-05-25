@@ -38,7 +38,7 @@ const strictRules = [
         type: 'statement'
     },
     {
-        patterns: ['bool', 'void', 'int', 'char', 'double', 'float', 'var', 'const', 'let', 'auto', 'true', 'false'],
+        patterns: ['bool', 'void', 'int', 'char', 'double', 'float', 'let', 'const', 'let', 'auto', 'true', 'false'],
         type: 'type'
     }
 ];
@@ -49,7 +49,7 @@ export default class TextFormatter {
         if (!text)
             return [];
 
-        var matches = this._applyPatternRules(text);
+        let matches = this._applyPatternRules(text);
 
         matches.reduce((column, match) => {
             match.width = this._getFragmentWidth(match.text, 0, match.text.length, column);

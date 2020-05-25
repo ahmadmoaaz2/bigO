@@ -18,31 +18,31 @@ export default class Document extends React.Component {
         this.onKeyUp = this.onKeyUp.bind(this);
         this.onInputChanged = this.onInputChanged.bind(this);
         this.addColorToDiv = this.addColorToDiv.bind(this);
+        this.pasteAsPlainText = this.pasteAsPlainText.bind(this);
         this.textFormatter = new TextFormatter();
     }
 
     pasteAsPlainText(e){
         // TODO: Fix paste limit
         e.preventDefault();
-        let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        let text = e.clipboardData.getData('text/plain');
+        console.log(text)
         document.execCommand("insertHTML", false, text);
     }
 
     onKeyUp(e) {
-        // TODO: Fix tab and enter
-        // TODO: Fix caret positioning reset on Enter and Tab
-        // \n not counted as character in caret positioning
-        // fix is getting line number of selection and adding it to .slice
+        // TODO: Fix caret positioning mini reset
         let obj = document.getElementById("editable");
-        console.log(EditCaretPositioning.saveSelection(obj).start)
+        let saved = EditCaretPositioning.saveSelection(obj);
         if(e.keyCode === 9) {
-            obj.innerText = obj.innerText.slice(0, EditCaretPositioning.saveSelection(obj).start) + "\t" + obj.innerText.slice(EditCaretPositioning.saveSelection(obj).start)
+            obj.innerText = obj.innerText.slice(0, saved.start) + "\t" + obj.innerText.slice(saved.start);
             e.preventDefault()
         } else if (e.keyCode === 13) {
             let obj = document.getElementById("editable");
-            obj.innerText = obj.innerText.slice(0, EditCaretPositioning.saveSelection(obj).start) + "\n" + obj.innerText.slice(EditCaretPositioning.saveSelection(obj).start)
-            e.preventDefault()
+            obj.innerText = obj.innerText.slice(0, saved.start) + (obj.innerText.charAt(saved.start - 1).match(/[^\s]/gi) ? "\n\n" : "\n") + obj.innerText.slice(saved.start);
+            e.preventDefault();
         }
+        EditCaretPositioning.restoreSelection(obj, saved)
     }
 
     onInputChanged(e) {
@@ -60,7 +60,7 @@ export default class Document extends React.Component {
 
     addColorToDiv(e) {
         let formattedHTML = "";
-        e.target.value = this.stripHTML(e.target.value).replace(/amp;/gi, "").replace(/gt;/gi, "")
+        e.target.value = this.stripHTML(e.target.value).replace(/amp;/gi, "").replace(/gt;/gi, "");
         for (let line of e.target.value.split("\n"))
             formattedHTML += ReactDOMServer.renderToStaticMarkup(
                 this.textFormatter.applyFormattingRules(line).map((fragment, index) =>
@@ -77,10 +77,6 @@ export default class Document extends React.Component {
     stripHTML(html){
         let string = html.replace(/<br>/gi, "\n");
         return string.replace(/<[^>]+>/g, '');
-    }
-
-    componentDidUpdate(prevProps, prevState, snapshot) {
-        EditCaretPositioning.restoreSelection(document.getElementById("editable"), this.state.cursorPosition)
     }
 
     render() {
@@ -101,7 +97,7 @@ export default class Document extends React.Component {
                     verticalAlign: "top",
                     font: "400 16px Bookman Old Style",
                 }} cols={2} rows={this.state.lineCount > 55 ? this.state.lineCount : 55} value={lineCounter} readOnly id="lineCounter"/>
-                <ContentEditable autoCorrect={false} spellCheck={false} autoCapitalize={false} id={"editable"} style={{
+                <ContentEditable autoCorrect="false" spellCheck="false" autoCapitalize="false" id={"editable"} style={{
                     overflowX: "hidden",
                     overflowY: "hidden",
                     backgroundColor: "#2b2b2c",
