@@ -23,7 +23,6 @@ export default class Document extends React.Component {
     }
 
     pasteAsPlainText(e){
-        // TODO: Fix paste limit
         e.preventDefault();
         let text = e.clipboardData.getData('text/plain');
         console.log(text)
@@ -32,6 +31,9 @@ export default class Document extends React.Component {
 
     onKeyUp(e) {
         // TODO: Fix caret positioning mini reset
+        // TODO: Caret resets to end
+        // TODO: Fix arrows not moving caret
+        // TODO: Enter puts two \n if put in between something
         let obj = document.getElementById("editable");
         let saved = EditCaretPositioning.saveSelection(obj);
         if(e.keyCode === 9) {
@@ -42,7 +44,7 @@ export default class Document extends React.Component {
             obj.innerText = obj.innerText.slice(0, saved.start) + (obj.innerText.charAt(saved.start - 1).match(/[^\s]/gi) ? "\n\n" : "\n") + obj.innerText.slice(saved.start);
             e.preventDefault();
         }
-        EditCaretPositioning.restoreSelection(obj, saved)
+        // EditCaretPositioning.restoreSelection(obj, saved)
     }
 
     onInputChanged(e) {
@@ -52,7 +54,7 @@ export default class Document extends React.Component {
         if (obj.innerHTML === "")
             this.setState({lineCount: 1, colCount: 0});
         else
-            this.setState({lineCount: obj.innerHTML.split("<br>").length - 1, colCount: obj.innerHTML.split("<br>").sort((a, b) => {return a.length > b.length ? a : b;})[0].length});
+            this.setState({lineCount: obj.innerHTML.split("<br>").length - ((obj.innerText.split("").pop() === "\n") ? 1 : 0), colCount: obj.innerHTML.split("<br>").sort((a, b) => {return a.length > b.length ? a : b;})[0].length});
         if (this.state.lineCount === 0)
             this.setState({lineCount: 1});
         this.addColorToDiv(e);
@@ -60,7 +62,7 @@ export default class Document extends React.Component {
 
     addColorToDiv(e) {
         let formattedHTML = "";
-        e.target.value = this.stripHTML(e.target.value).replace(/amp;/gi, "").replace(/gt;/gi, "");
+        e.target.value = this.stripHTML(e.target.value).replace(/&amp;/gi, "").replace(/&gt;/gi, ">").replace(/&lt;/gi, "<");
         for (let line of e.target.value.split("\n"))
             formattedHTML += ReactDOMServer.renderToStaticMarkup(
                 this.textFormatter.applyFormattingRules(line).map((fragment, index) =>
@@ -69,7 +71,7 @@ export default class Document extends React.Component {
                     {fragment.text}
                 </span>)
             ) + "<br>";
-        formattedHTML = formattedHTML.substring(0, formattedHTML.length-1)
+        formattedHTML = formattedHTML.substring(0, formattedHTML.length - 1)
         formattedHTML = formattedHTML.replace("\n", "<br>");
         this.setState({content: formattedHTML});
     }
@@ -80,6 +82,7 @@ export default class Document extends React.Component {
     }
 
     render() {
+        // TODO: Shadow
         let lineCounter = "";
         for (let i = 1; i <= this.state.lineCount; i++)
             lineCounter += i + '\n';
